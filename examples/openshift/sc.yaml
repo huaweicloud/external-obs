@@ -1,0 +1,10 @@
+apiVersion: storage.k8s.io/v1beta1
+kind: StorageClass
+metadata:
+  name: obs-storage-class
+provisioner: external.k8s.io/obs
+parameters:
+  accessKey: ak
+  secretKey: sk
+  storageClass: Standard
+  bucketPolicy: private
