@@ -150,7 +150,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:19def68f3ab8110b976dd179d50fddaa6a92d53a92a263dadb33e65abc89a890"
+  digest = "1:2535ef33439ddd7162f036adf5c8ec9aa1bdc3199df58c9ccc054719106012d4"
   name = "github.com/huaweicloud/golangsdk"
   packages = [
     ".",
@@ -161,6 +161,7 @@
     "openstack/identity/v3/endpoints",
     "openstack/identity/v3/services",
     "openstack/identity/v3/tokens",
+    "openstack/obs",
     "openstack/utils",
     "pagination",
   ]
@@ -592,6 +593,7 @@
     "github.com/gophercloud/gophercloud/openstack",
     "github.com/huaweicloud/golangsdk",
     "github.com/huaweicloud/golangsdk/openstack",
+    "github.com/huaweicloud/golangsdk/openstack/obs",
     "github.com/kubernetes-incubator/external-storage/lib/controller",
     "github.com/mitchellh/go-homedir",
     "gopkg.in/gcfg.v1",
