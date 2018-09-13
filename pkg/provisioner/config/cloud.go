@@ -26,6 +26,7 @@ import (
 	"github.com/huaweicloud/external-obs/pkg/provisioner/logger"
 	"github.com/huaweicloud/golangsdk"
 	"github.com/huaweicloud/golangsdk/openstack"
+	"github.com/huaweicloud/golangsdk/openstack/obs"
 
 	"github.com/gophercloud/gophercloud"
 	nativeopenstack "github.com/gophercloud/gophercloud/openstack"
@@ -265,9 +266,17 @@ func (c *CloudCredentials) getNativeEndpointType() gophercloud.Availability {
 }
 
 // OBSClient return obs client
-func (c *CloudCredentials) OBSClient() (*golangsdk.ServiceClient, error) {
-	return openstack.NewOBSService(c.CloudClient, golangsdk.EndpointOpts{
+func (c *CloudCredentials) OBSClient(AccessKey string, SecretKey string) (*obs.ObsClient, error) {
+	sc, err := openstack.NewOBSService(c.CloudClient, golangsdk.EndpointOpts{
 		Region:       c.Global.Region,
 		Availability: c.getEndpointType(),
 	})
+	if err != nil {
+		return nil, err
+	}
+	if (AccessKey != "") && (SecretKey != "") {
+		return obs.New(AccessKey, SecretKey, sc.ServiceURL())
+	} else {
+		return obs.New(c.Global.AccessKey, c.Global.SecretKey, sc.ServiceURL())
+	}
 }

@@ -18,6 +18,7 @@ package obs
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/golang/glog"
 	"github.com/huaweicloud/external-obs/pkg/provisioner/config"
@@ -52,10 +53,54 @@ func (p *Provisioner) Provision(volOptions controller.VolumeOptions) (*v1.Persis
 		return nil, fmt.Errorf("Claim Selector is not supported")
 	}
 
+	// get ak
+	ak := volOptions.Parameters[OBSParametersAccessKey]
+	if ak == "" {
+		return nil, fmt.Errorf("%s is not set", OBSParametersAccessKey)
+	}
+
+	// get sk
+	sk := volOptions.Parameters[OBSParametersSecretKey]
+	if sk == "" {
+		return nil, fmt.Errorf("%s is not set", OBSParametersSecretKey)
+	}
+
+	// init obs client
+	glog.Info("Init obs client...")
+	client, err := p.cloudconfig.OBSClient(ak, sk)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to create obs client: %v", err)
+	}
+
+	// close obs client
+	if client != nil {
+		defer client.Close()
+	}
+
+	// create bucket
+	glog.Info("Create bucket begin...")
+	bucket, err := CreateBucket(client, &volOptions, p)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to create bucket: %v", err)
+	}
+
+	// Example: https://{BucketName}.{Endpoint}
+	url := client.GetEndpoint()
+	parts := strings.Split(url, "//")
+	if len(parts) != 2 {
+		return nil, fmt.Errorf("unvalid url: %s", url)
+	}
+	endpoint := fmt.Sprintf("%s//%s.%s", parts[0], *bucket, parts[1])
+	glog.Infof("Provision endpoint: %s", endpoint)
+
 	return &v1.PersistentVolume{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:        volOptions.PVName,
-			Annotations: map[string]string{},
+			Name: volOptions.PVName,
+			Annotations: map[string]string{
+				OBSAnnotationID: *bucket,
+				OBSAnnotationAK: ak,
+				OBSAnnotationSK: sk,
+			},
 		},
 		Spec: v1.PersistentVolumeSpec{
 			PersistentVolumeReclaimPolicy: volOptions.PersistentVolumeReclaimPolicy,
@@ -63,12 +108,61 @@ func (p *Provisioner) Provision(volOptions controller.VolumeOptions) (*v1.Persis
 			Capacity: v1.ResourceList{
 				v1.ResourceName(v1.ResourceStorage): volOptions.PVC.Spec.Resources.Requests[v1.ResourceName(v1.ResourceStorage)],
 			},
-			PersistentVolumeSource: v1.PersistentVolumeSource{},
+			PersistentVolumeSource: v1.PersistentVolumeSource{
+				FlexVolume: &v1.FlexPersistentVolumeSource{
+					Driver: OBSFlexVolume,
+					Options: map[string]string{
+						OBSBucket:    *bucket,
+						OBSAccessKey: ak,
+						OBSSecretKey: sk,
+						OBSEndpoint:  endpoint,
+					},
+					ReadOnly: false,
+				},
+			},
 		},
 	}, nil
 }
 
 // Delete a bucket from obs
 func (p *Provisioner) Delete(pv *v1.PersistentVolume) error {
+
+	// get ak
+	ak, ok := pv.ObjectMeta.Annotations[OBSAnnotationAK]
+	if (!ok) || (ak == "") {
+		return fmt.Errorf("Failed to get ak %v", pv)
+	}
+
+	// get sk
+	sk, ok := pv.ObjectMeta.Annotations[OBSAnnotationSK]
+	if (!ok) || (sk == "") {
+		return fmt.Errorf("Failed to get sk %v", pv)
+	}
+
+	// init obs client
+	glog.Info("Init obs client...")
+	client, err := p.cloudconfig.OBSClient(ak, sk)
+	if err != nil {
+		return fmt.Errorf("Failed to create obs client: %v", err)
+	}
+
+	// close obs client
+	if client != nil {
+		defer client.Close()
+	}
+
+	// get bucket
+	bucket, ok := pv.ObjectMeta.Annotations[OBSAnnotationID]
+	if (!ok) || (bucket == "") {
+		return fmt.Errorf("Failed to get bucket %v", pv)
+	}
+
+	// delete bucket
+	glog.Infof("Delete bucket: %s", bucket)
+	err = DeleteBucket(client, bucket)
+	if err != nil {
+		return fmt.Errorf("failed to delete bucket: %v", err)
+	}
+
 	return nil
 }
