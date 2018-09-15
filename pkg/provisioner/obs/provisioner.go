@@ -103,7 +103,7 @@ func (p *Provisioner) Provision(volOptions controller.VolumeOptions) (*v1.Persis
 				v1.ResourceName(v1.ResourceStorage): volOptions.PVC.Spec.Resources.Requests[v1.ResourceName(v1.ResourceStorage)],
 			},
 			PersistentVolumeSource: v1.PersistentVolumeSource{
-				FlexVolume: &v1.FlexPersistentVolumeSource{
+				FlexVolume: &v1.FlexVolumeSource{
 					Driver: OBSFlexVolume,
 					Options: map[string]string{
 						OBSBucket:    *bucket,
