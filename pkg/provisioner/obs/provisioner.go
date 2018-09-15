@@ -18,7 +18,6 @@ package obs
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/golang/glog"
 	"github.com/huaweicloud/external-obs/pkg/provisioner/config"
@@ -85,12 +84,7 @@ func (p *Provisioner) Provision(volOptions controller.VolumeOptions) (*v1.Persis
 	}
 
 	// Example: https://{BucketName}.{Endpoint}
-	url := client.GetEndpoint()
-	parts := strings.Split(url, "//")
-	if len(parts) != 2 {
-		return nil, fmt.Errorf("unvalid url: %s", url)
-	}
-	endpoint := fmt.Sprintf("%s//%s.%s", parts[0], *bucket, parts[1])
+	endpoint := client.GetEndpoint()
 	glog.Infof("Provision endpoint: %s", endpoint)
 
 	return &v1.PersistentVolume{
