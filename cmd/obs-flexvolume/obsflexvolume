@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Copyright 2018 The Kubernetes Authors.
 #
@@ -62,12 +62,12 @@ assert_jq() {
 }
 
 ismounted() {
-	CONTAINER=`docker ps --filter "label=mountpath=${mount_dir}" --format "{{.ID}}"`
-	if [ "${CONTAINER}" == "" ]; then
-		echo "0"
-	else
-		echo "1"
-	fi
+    CONTAINER=`docker ps --filter "label=mountpath=${mount_dir}" --format "{{.ID}}"`
+    if [ "${CONTAINER}" == "" ]; then
+        echo "0"
+    else
+        echo "1"
+    fi
 }
 
 # ==============================================================================
@@ -76,49 +76,7 @@ ismounted() {
 
 # Initializes the driver
 doinit(){
-    log "{\"status\": \"Success\", \"capabilities\": {\"attach\": false}"
-    exit 0
-}
-
-# get volume's name
-dogetvolumename() {
-    log "{\"status\": \"Success\"}"
-    exit 0
-}
-
-# Attach the volume specified by the given spec on the given host
-doattach() {
-    log "{\"status\": \"Success\"}"
-    exit 0
-}
-
-# Detach the volume from the Kubelet node
-dodetach() {
-    log "{\"status\": \"Success\"}"
-    exit 0
-}
-
-# Wait for the volume to be attached on the remote node
-dowaitforattach() {
-    log "{\"status\": \"Success\"}"
-    exit 0
-}
-
-# Check the volume is attached on the node
-doisattached() {
-    log "{\"status\": \"Success\"}"
-    exit 0
-}
-
-# Mount device mounts the device to a global path which individual pods can then bind mount.
-domountdevice() {
-    log "{\"status\": \"Success\"}"
-    exit 0
-}
-
-# Mount device mounts the device to a global path which individual pods can then bind mount.
-dounmountdevice() {
-    log "{\"status\": \"Success\"}"
+    log "{\"status\": \"Success\", \"capabilities\": {\"attach\": false}}"
     exit 0
 }
 
@@ -129,30 +87,28 @@ domount() {
     debug "mount_dir called: "${mount_dir}
     debug "json_options called: "${json_options}
 
-    die_notsupported # = using default
-
     assert_jq
     local OBSBucket=$(echo $2|jq -r '.["OBSBucket"]')
-	local OBSAccessKey=$(echo $2|jq -r '.["OBSAccessKey"]')
-	local OBSSecretKey=$(echo $2|jq -r '.["OBSSecretKey"]')
-	local OBSEndpoint=$(echo $2|jq -r '.["OBSEndpoint"]')
+    local OBSAccessKey=$(echo $2|jq -r '.["OBSAccessKey"]')
+    local OBSSecretKey=$(echo $2|jq -r '.["OBSSecretKey"]')
+    local OBSEndpoint=$(echo $2|jq -r '.["OBSEndpoint"]')
     debug "OBSBucket called: "${OBSBucket}
     debug "OBSAccessKey called: "${OBSAccessKey}
     debug "OBSSecretKey called: "${OBSSecretKey}
     debug "OBSEndpoint called: "${OBSEndpoint}
 
     if [ $(ismounted) -eq 1 ] ; then
-	    debug "it has already been mounted! "${mount_dir}
-		log "{\"status\": \"Success\"}"
-		exit 0
-	fi
+        debug "it has already been mounted! "${mount_dir}
+        log "{\"status\": \"Success\"}"
+        exit 0
+    fi
 
     mkdir -p ${mount_dir} &> /dev/null
 
     DOCKER_OUT=`docker run -d --privileged -l mountpath=${mount_dir} -e OBSAccessKey=${OBSAccessKey} -e OBSSecretKey=${OBSSecretKey} -v ${mount_dir}:/mnt/mountpoint:shared --cap-add SYS_ADMIN quay.io/huaweicloud/obs-flexvolume ${OBSBucket} /mnt/mountpoint -o passwd_file=/etc/passwd-s3fs -o url=${OBSEndpoint} -d -d -f -o f2 -o curldbg`
     debug "DOCKER_OUT called: "${DOCKER_OUT}
 
-	log "{\"status\": \"Success\"}: "$*
+    log "{\"status\": \"Success\"}: "$*
     exit 0
 }
 
@@ -161,22 +117,20 @@ dounmount() {
     local mount_dir=$1
     debug "umount_dir called: "${mount_dir}
 
-    die_notsupported # = using default
-
-	if [ $(ismounted) -eq 0 ] ; then
-		debug "it has already been unmounted! "${mount_dir}
-		log "{\"status\": \"Success\"}"
-		exit 0
-	fi
+    if [ $(ismounted) -eq 0 ] ; then
+        debug "it has already been unmounted! "${mount_dir}
+        log "{\"status\": \"Success\"}"
+        exit 0
+    fi
         
     CONTAINER=`docker ps --filter "label=mountpath=${mount_dir}" --format "{{.ID}}"`
     debug "CONTAINER called: "${CONTAINER}
-	docker rm ${CONTAINER} -f
+    docker rm ${CONTAINER} -f
     umount ${mount_dir}
     rmdir ${mount_dir} &> /dev/null
 
-	log "{\"status\": \"Success\"}"
-	exit 0
+    log "{\"status\": \"Success\"}"
+    exit 0
 }
 
 # log CLI
@@ -193,27 +147,6 @@ debug "$op() called: "$*
 case "$op" in
     init)
         doinit $*
-        ;;
-    getvolumename)
-        dogetvolumename $*
-        ;;
-    attach)
-        doattach $*
-        ;;
-    detach)
-        dodetach $*
-        ;;
-    waitforattach)
-        dowaitforattach $*
-        ;;
-    isattached)
-        doisattached $*
-        ;;
-    mountdevice)
-        domountdevice $*
-        ;;
-    unmountdevice)
-        dounmountdevice $*
         ;;
     mount)
         domount $*
