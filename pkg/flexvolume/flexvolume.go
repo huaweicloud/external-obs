@@ -93,7 +93,7 @@ func (d *FlexVolumeDriver) doRun(args []string) (map[string]interface{}, error) 
 
 // init: <driver executable> init
 func (d *FlexVolumeDriver) init() (map[string]interface{}, error) {
-	glog.V(5).Info("flexvolume init() is called")
+	glog.Info("flexvolume init() is called")
 
 	// "{\"status\": \"Success\", \"capabilities\": {\"attach\": false}}"
 	return map[string]interface{}{
@@ -105,7 +105,7 @@ func (d *FlexVolumeDriver) init() (map[string]interface{}, error) {
 
 // mount: <driver executable> mount <mount dir> <json options>
 func (d *FlexVolumeDriver) mount(targetMountDir, jsonOptions string) (map[string]interface{}, error) {
-	glog.V(5).Infof("flexvolume targetMountDir: %s jsonOptions: %s", targetMountDir, jsonOptions)
+	glog.Infof("flexvolume targetMountDir: %s jsonOptions: %s", targetMountDir, jsonOptions)
 
 	// execIsMounted
 	res, err := execIsMounted(targetMountDir)
@@ -113,7 +113,7 @@ func (d *FlexVolumeDriver) mount(targetMountDir, jsonOptions string) (map[string
 		return nil, err
 	}
 	if res == "1" {
-		glog.V(5).Infof("flexvolume targetMountDir: %s has already been mounted", targetMountDir)
+		glog.Infof("flexvolume targetMountDir: %s has already been mounted", targetMountDir)
 		return nil, nil
 	}
 
@@ -167,11 +167,11 @@ func (d *FlexVolumeDriver) mount(targetMountDir, jsonOptions string) (map[string
 
 // unmount: <driver executable> unmount <mount dir>
 func (d *FlexVolumeDriver) unmount(targetMountDir string) (map[string]interface{}, error) {
-	glog.V(5).Infof("flexvolume targetMountDir: %s", targetMountDir)
+	glog.Infof("flexvolume targetMountDir: %s", targetMountDir)
 
 	// check the target directory
 	if _, err := os.Stat(targetMountDir); os.IsNotExist(err) {
-		glog.V(5).Infof("flexvolume targetMountDir: %s has does not exist", targetMountDir)
+		glog.Infof("flexvolume targetMountDir: %s has does not exist", targetMountDir)
 		return nil, nil
 	}
 
@@ -181,7 +181,7 @@ func (d *FlexVolumeDriver) unmount(targetMountDir string) (map[string]interface{
 		return nil, err
 	}
 	if res == "0" {
-		glog.V(5).Infof("flexvolume targetMountDir: %s has already been unmounted", targetMountDir)
+		glog.Infof("flexvolume targetMountDir: %s has already been unmounted", targetMountDir)
 		return nil, nil
 	}
 

@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os/exec"
+	"strings"
 )
 
 // formatResult is used to format
@@ -51,23 +52,28 @@ func execIsMounted(mountDir string) (string, error) {
 	output, err := exec.Command("docker",
 		"ps",
 		"--filter",
-		"\"label=mountpath="+mountDir+"\"",
+		"label=mountpath="+mountDir,
 		"--format",
-		"\"{{.ID}}\"").CombinedOutput()
+		"{{.ID}}").CombinedOutput()
 	if err != nil {
 		return "", fmt.Errorf("docker ps failed: %v", err)
 	}
-	return string(output), nil
+
+	// return
+	str := strings.Replace(string(output), "\n", "", -1)
+	if str == "" {
+		return "0", nil
+	} else {
+		return "1", nil
+	}
 }
 
 // execMount defines
 func execMount(mountDir, strOBSAccessKey, strOBSSecretKey, strOBSBucket, strOBSEndpoint string) error {
-	// mkdir -p ${mount_dir} &> /dev/null
+	// mkdir -p ${mount_dir}
 	_, err := exec.Command("mkdir",
 		"-p",
-		mountDir,
-		"&>",
-		"/dev/null").CombinedOutput()
+		mountDir).CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("mkdir failed: %v", err)
 	}
@@ -100,9 +106,9 @@ func execMount(mountDir, strOBSAccessKey, strOBSSecretKey, strOBSBucket, strOBSE
 		"-d",
 		"-f",
 		"-o",
-		"-f2",
+		"f2",
 		"-o",
-		"-curldbg").CombinedOutput()
+		"curldbg").CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("docker run failed: %v", err)
 	}
@@ -115,17 +121,18 @@ func execUnmount(mountDir string) error {
 	output, err := exec.Command("docker",
 		"ps",
 		"--filter",
-		"\"label=mountpath="+mountDir+"\"",
+		"label=mountpath="+mountDir,
 		"--format",
-		"\"{{.ID}}\"").CombinedOutput()
+		"{{.ID}}").CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("docker ps failed: %v", err)
 	}
 
 	// docker rm ${CONTAINER} -f
+	str := strings.Replace(string(output), "\n", "", -1)
 	_, err = exec.Command("docker",
 		"rm",
-		string(output),
+		str,
 		"-f").CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("docker rm failed: %v", err)
@@ -139,11 +146,10 @@ func execUnmount(mountDir string) error {
 		return fmt.Errorf("umount failed: %v", err)
 	}
 
-	// rmdir ${mount_dir} &> /dev/null
-	_, err = exec.Command("rmdir",
-		mountDir,
-		"&>",
-		"/dev/null").CombinedOutput()
+	// rmdir ${mount_dir}
+	_, err = exec.Command("rm",
+		"-rf",
+		mountDir).CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("rmdir failed: %v", err)
 	}
