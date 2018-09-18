@@ -1,2 +1,4 @@
 /bin
 cmd/obs-provisioner/obs-provisioner
+cmd/obs-flexvolume/obs-flexvolume
+
