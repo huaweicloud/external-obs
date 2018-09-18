@@ -17,7 +17,7 @@ docker-obs-provisioner:obs-provisioner
 	cp ./bin/obs-provisioner ./cmd/obs-provisioner
 	docker build cmd/obs-provisioner -t quay.io/huaweicloud/obs-provisioner:latest
 
-docker-obs-flexvolume:
+docker-obs-flexvolume:obs-flexvolume
 	cp ./bin/obs-flexvolume ./cmd/obs-flexvolume
 	docker build cmd/obs-flexvolume -t quay.io/huaweicloud/obs-flexvolume:latest
 
