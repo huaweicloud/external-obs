@@ -24,7 +24,7 @@ import (
 // CreateBucket in OBS
 func CreateBucket(client *obs.ObsClient, volOptions *controller.VolumeOptions, p *Provisioner) (*string, error) {
 
-	// build share createOpts
+	// build bucket createOpts
 	createOpts := &obs.CreateBucketInput{}
 
 	// Setting Bucket
@@ -73,5 +73,40 @@ func DeleteBucket(client *obs.ObsClient, bucket string) error {
 	}
 
 	glog.Infof("Delete bucket response: %v", obsResponse)
+	return nil
+}
+
+// DeleteObjects in OBS
+func DeleteObjects(client *obs.ObsClient, bucket string) error {
+
+	// build bucket listOpts
+	listOpts := &obs.ListObjectsInput{}
+	listOpts.Bucket = bucket
+
+	// list objects in bucket
+	listResponse, err := client.ListObjects(listOpts)
+	if err != nil {
+		return fmt.Errorf("Couldn't list objects in OBS: %v", err)
+	}
+	glog.Infof("List objects response: %v", listResponse)
+
+	// delete objects in bucket
+	if len(listResponse.Contents) > 0 {
+		objects := make([]obs.ObjectToDelete, 0, len(listResponse.Contents))
+		for _, val := range listResponse.Contents {
+			objects = append(objects, obs.ObjectToDelete{Key: val.Key})
+		}
+		deleteOpts := &obs.DeleteObjectsInput{}
+		deleteOpts.Bucket = bucket
+		deleteOpts.Objects = objects
+
+		// delete objects in bucket
+		deleteResponse, err := client.DeleteObjects(deleteOpts)
+		if err != nil {
+			return fmt.Errorf("Couldn't delete objects in OBS: %v", err)
+		}
+		glog.Infof("Delete objects response: %v", deleteResponse)
+	}
+
 	return nil
 }

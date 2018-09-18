@@ -151,6 +151,13 @@ func (p *Provisioner) Delete(pv *v1.PersistentVolume) error {
 		return fmt.Errorf("Failed to get bucket %v", pv)
 	}
 
+	// delete objects in bucket
+	glog.Infof("Delete objects in bucket: %s", bucket)
+	err = DeleteObjects(client, bucket)
+	if err != nil {
+		return fmt.Errorf("failed to delete objects in bucket: %v", err)
+	}
+
 	// delete bucket
 	glog.Infof("Delete bucket: %s", bucket)
 	err = DeleteBucket(client, bucket)
